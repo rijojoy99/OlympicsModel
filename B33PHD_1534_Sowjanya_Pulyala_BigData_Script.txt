@@ -1,0 +1,101 @@
+## Set Python - Spark environment.
+import os
+import sys
+os.environ["SPARK_HOME"] = "/usr/hdp/current/spark2-client"
+os.environ["PYLIB"] = os.environ["SPARK_HOME"] + "/python/lib"
+sys.path.insert(0, os.environ["PYLIB"] + "/py4j-0.10.4-src.zip")
+sys.path.insert(0, os.environ["PYLIB"] + "/pyspark.zip")
+
+## Create SparkContext, SparkSession
+from pyspark.sql import SparkSession
+from pyspark import SparkContext
+sc = SparkContext()
+spark = SparkSession(sc)
+
+## Verify Spark Context
+sc
+
+from pyspark.sql.types import *
+from pyspark.sql.functions import *
+
+import numpy as np
+import StringIO
+import pandas as pd
+import warnings
+
+# Plotting libraries
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+import plotly
+plotly.tools.set_credentials_file(username='sowjanya.pulyala18@gmail.com', api_key='Subv0KecxX4C68LwRMUp')
+
+import plotly.figure_factory as ff
+import plotly.plotly as py
+import plotly.offline as pyoff
+import plotly.graph_objs as go
+
+# Initializing some settings
+sns.set_style('whitegrid')
+sns.set(color_codes=True)
+warnings.filterwarnings('ignore')
+pyoff.init_notebook_mode(connected=True)
+get_ipython().magic('matplotlib inline')
+
+
+## Define Schema
+finDistress_schema = StructType([
+         StructField("Target", IntegerType(), True),
+         StructField("Utilization", StringType(), True),
+         StructField("age", StringType(), True),
+         StructField("FD_ind1", StringType(), True),
+         StructField("Debt Ratio", StringType(), True),
+         StructField("Monthly Income", DoubleType(), True),
+         StructField("FD_ind2", StringType(), True),
+         StructField("FD_ind3", StringType(), True),        
+         StructField("FD_ind4", StringType(), True),
+         StructField("FD_ind5", IntegerType(), True),
+         StructField("NumberOfDependents", StringType(), True)])
+
+
+## Read data and create a dataframe
+
+finDist = spark.read.format("csv")\
+        .option("header", "false")\
+        .option("inferSchema", "true")\
+        .load("file:///home/1534B33/Batch33_phdData.csv", schema = finDistress_schema)
+
+
+## To Count the number of rows in DataFrame
+print('Total records count is {}'.format(finDist.count()))
+
+—-Total records count is 150000
+
+## Columns count and column names
+print("Total Columns count is {}".format(len(finDist.columns)))
+print("\n\nColumns are: {} \n".format(finDist.columns))
+
+—Total Columns count is 11
+
+# Give the percentage distribution of Target attribute and verify if it is a class imbalance problem or not.
+
+prctDist = finDist.groupBy('Target').count() \
+    .withColumn('total', lit(total)) \
+    .withColumn('Percent', expr('count/total'))
+
+prctDist.show()
+
+
+# Target| count| total|fraction|
+# ————————————————
+#     1| 10026|150000| 0.06684|
+#     0|139974|150000| 0.93316|
+
+# Count the missing values
+
+count_of_na = finDist.na.__sizeof__()
+
+count_of_na = finDist.na.__sizeof__()
+
+#(‘Count of NAs =>', 32)
+
